@@ -1,77 +1,168 @@
-# Ubuntu 24.04 Keyboard Backlight Fix for Monster Notebooks
+# Monster Notebook Linux Driver Fix
 
-If you just installed Ubuntu on your Monster notebook (specifically tested on my Tulpar T6 V2.1 running Ubuntu 24.04) and your keyboard commands are not working, this guide is for you. 
+**Tested on:** Monster TULPAR T6 V2.1 · Ubuntu 24.04 · Kernel 6.17+
 
-I spent hours trying to get this working. If you have tried OpenRGB, AUCC, or the Tuxedo Control Center and got "No such device" errors, stop what you are doing. This is the actual fix.
-
-## 🛑 Why Standard Apps Don't Work
-
-If you are not a developer and just want your lights on, skip to the **Installation** section. But if you are curious why this is so broken out of the box:
-
-1. **No USB Connection:** Apps like OpenRGB look for a keyboard connected via an internal USB. Monster laptops don't do this; the lights are wired directly into the motherboard.
-2. **The Tuxedo Block:** Tuxedo Computers makes a Linux driver for our exact motherboard type. However, their driver checks your system name. When it reads `MONSTER` instead of `TUXEDO`, it intentionally blocks the connection and refuses to turn on the lights.
-
-We are going to use a community-modified driver (thanks to NovaCustom) that removes this name check so our keyboards can finally turn on.
+Fixes three things that break after a kernel upgrade on Monster (Clevo-based) notebooks:
+- Keyboard backlight dead / stuck off
+- Touchpad locked (disabled at the hardware level)
+- NVIDIA driver not communicating (`nvidia-smi` fails)
 
 ---
 
-## ✅ Installation Guide (Step-by-Step)
+## Why This Happens
 
-Follow these steps exactly. You do not need any coding experience, just copy and paste.
+### Keyboard Backlight
 
-### Step 1: Open Your Terminal
-Press `Ctrl` + `Alt` + `T` on your keyboard to open the terminal.
+The `tuxedo-drivers` package (which controls the Clevo keyboard hardware) contains a compatibility gate that only allows itself to load on systems where the DMI vendor string is exactly `"TUXEDO"`. Monster notebooks report `"MONSTER"` — so the driver refuses to initialize and exits silently with `No such device`.
 
-### Step 2: Run the Installer
-Copy the exact line of code below, paste it into your terminal, and press `Enter`. It will ask for your computer password. When you type your password, nothing will show up on screen (this is normal in Linux), just type it and press `Enter`.
+On kernel 6.17+, an additional problem appears: the kernel ships a built-in `tuxedo_io` v0.3.9 while the DKMS package provides v0.3.6, causing a module version collision.
 
-```bash
-wget [https://github.com/wessel-novacustom/clevo-keyboard/raw/master/kb.sh](https://github.com/wessel-novacustom/clevo-keyboard/raw/master/kb.sh) && chmod +x kb.sh && sudo ./kb.sh
-```
-*Wait for the terminal to finish downloading and installing the driver.*
+### Touchpad Locked
 
-### Step 3: 🛑 REBOOT YOUR COMPUTER 🛑
-**This is the most important step. Your lights will NOT turn on yet.** The computer needs to restart to load the new driver. 
+The Embedded Controller (EC) on Clevo boards has a hardware-level touchpad enable/disable flag. This flag survives reboots. When the Tuxedo driver fails to load, the EC register can get stuck at `0` (disabled) with no way to toggle it back — because the `/dev/tuxedo_io` device that controls the EC never loads.
 
-Close everything and restart your laptop. 
+### NVIDIA Driver
 
-### Step 4: You Have Lights!
-When your laptop turns back on, your keyboard should light up in solid **White**. 
-
-You can now use your keyboard shortcuts to control the lights (hold the `Fn` key and press the keys on your Numpad):
-* `Fn` + `/` : Turn lights On or Off
-* `Fn` + `*` : Cycle through colors
-* `Fn` + `+` : Turn brightness up
-* `Fn` + `-` : Turn brightness down
+Ubuntu ships pre-built NVIDIA kernel module packages keyed per kernel version. When you jump to a new kernel (e.g. `6.17.0-23`), the matching package (`linux-modules-nvidia-580-open-6.17.0-23-generic`) must be installed. If you have the Tuxedo apt repository enabled, its epoch-versioned NVIDIA packages (`2:580.126.09`) block apt from upgrading to Ubuntu's newer `580.142` build — which is what the per-kernel package depends on.
 
 ---
 
-## 🎨 Bonus: Easy Color Changing Script
+## The Fix
 
-If you don't want to use the keyboard shortcuts and want a quick way to change your default boot color from the terminal, you can create a simple script.
+### One-Command Install
 
-Run this command to create a file called `color.sh`:
 ```bash
-echo -e '#!/bin/bash\nif [ -z "$1" ]; then\n  echo "Usage: ./color.sh [RED|GREEN|BLUE|YELLOW|MAGENTA|CYAN|WHITE|BLACK]"\n  exit 1\nfi\necho "options tuxedo_keyboard color=${1^^}" | sudo tee /etc/modprobe.d/tuxedo_keyboard.conf\nsudo rmmod tuxedo_keyboard\nsudo modprobe tuxedo_keyboard\necho "Color changed to ${1^^}!"' > color.sh && chmod +x color.sh
+curl -fsSL https://raw.githubusercontent.com/HawkOsm/monster-notebook-keyboard-driver-problem-fix/main/fix.sh | sudo bash
 ```
 
-Now, whenever you want to change your color instantly, just open a terminal and type:
+Or download and inspect first (recommended):
+
 ```bash
-./color.sh blue
+wget https://raw.githubusercontent.com/HawkOsm/monster-notebook-keyboard-driver-problem-fix/main/fix.sh
+cat fix.sh          # read it before running anything as root
+sudo bash fix.sh
 ```
-*(You can use red, green, blue, yellow, magenta, cyan, white, or black).*
+
+**Reboot after the script finishes.** Everything is configured to restore automatically on every boot.
 
 ---
 
-## 🚑 Troubleshooting
+## What the Script Does (step by step)
 
-**"I did everything and restarted, but my lights are still off!"**
+| Step | Action |
+|------|--------|
+| 1 | Installs `tuxedo-drivers-dkms` from the Tuxedo repo if not already present |
+| 2 | Patches `tuxedo_compatibility_check.c` to accept `"MONSTER"` as a valid DMI vendor |
+| 3 | Forces a clean DKMS rebuild for the running kernel |
+| 4 | Creates `/etc/modules-load.d/tuxedo.conf` so all required modules autoload at boot |
+| 5 | Loads the modules immediately (no reboot needed to test) |
+| 6 | Sets keyboard backlight to full brightness |
+| 7 | Reads the EC touchpad register via `/dev/tuxedo_io` IOCTL and sets it to `1` (enabled) |
+| 8 | Installs `tuxedo-touchpad-enable.service` — a systemd oneshot that re-enables the touchpad after every boot |
+| 9 | Updates initramfs |
 
-Your computer's **Secure Boot** is likely blocking the driver. You need to turn it off.
+---
 
+## NVIDIA Fix (separate step — only needed if `nvidia-smi` fails)
 
-1. Restart your computer and rapidly press `F2` (or your specific BIOS key, sometimes `Delete`) to enter the BIOS menu.
-2. Use your arrow keys to find the **Security** or **Boot** tab.
-3. Find **Secure Boot** and change it from `Enabled` to `Disabled`.
-4. Save your changes and exit (usually `F10`). 
-5. When Ubuntu boots up, your lights will turn on.
+Run this **after** `fix.sh`:
+
+```bash
+wget https://raw.githubusercontent.com/HawkOsm/monster-notebook-keyboard-driver-problem-fix/main/fix_nvidia.sh
+sudo bash fix_nvidia.sh
+```
+
+Or manually:
+
+```bash
+# 1. Pin Ubuntu's NVIDIA packages above the Tuxedo repo epoch
+sudo tee /etc/apt/preferences.d/nvidia-ubuntu-pin << 'EOF'
+Package: *nvidia* libnvidia* linux-modules-nvidia* linux-objects-nvidia*
+Pin: release o=Ubuntu,a=noble-updates
+Pin-Priority: 1001
+
+Package: *nvidia* libnvidia* linux-modules-nvidia* linux-objects-nvidia*
+Pin: release o=Ubuntu,a=noble-security
+Pin-Priority: 1001
+EOF
+
+# 2. Upgrade NVIDIA to 580.142 and install kernel modules
+sudo apt-get update
+sudo apt-get install -y --allow-downgrades \
+  nvidia-kernel-common-580=580.142-0ubuntu0.24.04.1 \
+  nvidia-driver-580-open=580.142-0ubuntu0.24.04.1 \
+  linux-modules-nvidia-580-open-$(uname -r)
+
+# 3. Load the driver
+sudo modprobe nvidia
+nvidia-smi
+```
+
+---
+
+## Manual Controls (after fix)
+
+### Keyboard Backlight
+
+```bash
+# Check current brightness (0–255)
+cat /sys/class/leds/rgb:kbd_backlight/brightness
+
+# Set brightness (replace 200 with any value 0–255)
+echo 200 | sudo tee /sys/class/leds/rgb:kbd_backlight/brightness
+
+# Turn off
+echo 0 | sudo tee /sys/class/leds/rgb:kbd_backlight/brightness
+```
+
+Keyboard shortcuts (hold `Fn`):
+
+| Keys | Action |
+|------|--------|
+| `Fn` + `/` | Toggle backlight on/off |
+| `Fn` + `*` | Cycle colors |
+| `Fn` + `+` | Brightness up |
+| `Fn` + `-` | Brightness down |
+
+### Touchpad
+
+The touchpad toggle is `Fn` + `F1` (varies by model). If the touchpad locks again after a reboot the installed systemd service will re-enable it automatically. To re-enable it manually:
+
+```bash
+sudo python3 /usr/local/bin/tuxedo-touchpad-enable.py
+```
+
+---
+
+## Troubleshooting
+
+**`modprobe: ERROR: could not insert 'tuxedo_keyboard': No such device`**
+The compatibility patch wasn't applied or the DKMS rebuild used a cached build. Run:
+```bash
+sudo dkms unbuild tuxedo-drivers/4.22.2 -k $(uname -r)
+sudo dkms build   tuxedo-drivers/4.22.2 -k $(uname -r)
+sudo dkms install tuxedo-drivers/4.22.2 -k $(uname -r) --force
+```
+
+**`modprobe: ERROR: could not insert 'tuxedo_keyboard': Operation not permitted`**
+Run without `sudo` by mistake, or kernel lockdown is active. Check: `cat /sys/kernel/security/lockdown`. Should read `[none]`.
+
+**Touchpad still locked after reboot**
+Check the service ran: `systemctl status tuxedo-touchpad-enable.service`. If failed, run `sudo python3 /usr/local/bin/tuxedo-touchpad-enable.py` and inspect the output.
+
+**NVIDIA: `couldn't communicate with the NVIDIA driver`**
+The kernel module package for your exact kernel version is missing. Run `fix_nvidia.sh` (see above).
+
+---
+
+## Tested Configuration
+
+| Component | Details |
+|-----------|---------|
+| Laptop | Monster TULPAR T6 V2.1 |
+| CPU | Intel Core Ultra 7 155H (Meteor Lake) |
+| GPU | NVIDIA GeForce RTX 4070 Laptop |
+| OS | Ubuntu 24.04 LTS |
+| Kernel | 6.17.0-23-generic |
+| Driver package | tuxedo-drivers 4.22.2 |
+| NVIDIA driver | 580.142 |
