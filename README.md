@@ -2,10 +2,12 @@
 
 **Tested on:** Monster TULPAR T6 V2.1 · Ubuntu 24.04 · Kernel 6.17+
 
-Fixes three things that break after a kernel upgrade on Monster (Clevo-based) notebooks:
+Fixes everything that breaks after a kernel upgrade on Monster (Clevo-based) notebooks:
 - Keyboard backlight dead / stuck off
 - Touchpad locked (disabled at the hardware level)
 - NVIDIA driver not communicating (`nvidia-smi` fails)
+- GPU never used — all rendering on Intel iGPU ("CPU") instead of RTX 4070
+- Temperature and fan sensors missing or unlabeled
 
 ---
 
@@ -100,6 +102,76 @@ nvidia-smi
 
 ---
 
+## GPU PRIME Fix (all rendering on Intel instead of NVIDIA)
+
+On Ubuntu, hybrid graphics defaults to `on-demand` PRIME mode: Intel drives the display, NVIDIA sits idle. Everything appears to run on "CPU" because the iGPU is doing all the rendering.
+
+```bash
+sudo bash fix_gpu_prime.sh
+# then reboot
+```
+
+Verify after reboot:
+```bash
+glxinfo | grep "OpenGL renderer"
+# NVIDIA GeForce RTX 4070 Laptop GPU
+```
+
+To go back to power-saving mode (Intel only, better battery life):
+```bash
+sudo prime-select on-demand && sudo reboot
+```
+
+---
+
+## Temperature & Fan Monitoring
+
+Sensors are split across multiple subsystems on this hardware. After running `fix.sh`, install the monitoring script:
+
+```bash
+sudo cp temps.py /usr/local/bin/temps && sudo chmod +x /usr/local/bin/temps
+```
+
+Then run:
+```bash
+temps
+```
+
+Output:
+```
+╔════════════════════════════════════════╗
+║  Monster TULPAR T6 V2.1 - Thermals    ║
+╠════════════════════════════════════════╣
+║  CPU Package   : 61.0C               ║
+║  CPU Max Core  : 62C                 ║
+║  NVMe 0        : 28.0C               ║
+║  NVMe 1        : 32.0C               ║
+╠════════════════════════════════════════╣
+║  GPU Temp      : 43C                 ║
+║  GPU Fan (smi) : EC-controlled       ║
+║  GPU Power     : 17W                 ║
+║  GPU Clock     : 2370MHz             ║
+╠════════════════════════════════════════╣
+║  CPU Fan       : 2298 RPM            ║
+║  DGPU Fan      : 2274 RPM            ║
+╚════════════════════════════════════════╝
+```
+
+### What's working natively in `sensors`
+
+| Sensor | Source | Status |
+|--------|--------|--------|
+| CPU package + all cores | `coretemp` | Working |
+| Both NVMe drives | `nvme` hwmon | Working |
+| CPU Fan RPM | ACPI hwmon (`INTC1063:00`) | Working |
+| DGPU Fan RPM | ACPI hwmon (`INTC1063:01`) | Working |
+| GPU temperature | `nvidia-smi` / NVIDIA hwmon | Working (NVIDIA hwmon appears after reboot in PRIME nvidia mode) |
+| System ACPI temp | `acpitz` | Working |
+
+Note: The ITE IT5570E embedded controller (chip ID `0x5570`) is not supported by the standard `it87` kernel module. Fan RPM is read via ACPI hwmon which is accurate. Fan PWM control is handled by the EC firmware and the Tuxedo Control Center.
+
+---
+
 ## Manual Controls (after fix)
 
 ### Keyboard Backlight
@@ -155,6 +227,18 @@ The kernel module package for your exact kernel version is missing. Run `fix_nvi
 
 ---
 
+## Scripts in this repo
+
+| File | Purpose |
+|------|---------|
+| `fix.sh` | Main fix: keyboard backlight + touchpad EC unlock |
+| `fix_nvidia.sh` | NVIDIA driver upgrade for new kernels |
+| `fix_gpu_prime.sh` | Switch PRIME to NVIDIA mode (GPU takes over all rendering) |
+| `temps.py` | Thermal dashboard: CPU/GPU temp, both fan RPMs, NVMe |
+| `tuxedo-touchpad-enable.py` | Standalone touchpad EC unlock script (used by systemd service) |
+
+---
+
 ## Tested Configuration
 
 | Component | Details |
@@ -162,6 +246,7 @@ The kernel module package for your exact kernel version is missing. Run `fix_nvi
 | Laptop | Monster TULPAR T6 V2.1 |
 | CPU | Intel Core Ultra 7 155H (Meteor Lake) |
 | GPU | NVIDIA GeForce RTX 4070 Laptop |
+| EC | ITE IT5570E |
 | OS | Ubuntu 24.04 LTS |
 | Kernel | 6.17.0-23-generic |
 | Driver package | tuxedo-drivers 4.22.2 |
