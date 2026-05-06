@@ -1,3 +1,55 @@
+# Temperature & Fan Monitoring
+
+A thermal dashboard for the Monster TULPAR T6 V2.1 that reads CPU/GPU temperatures, NVMe drive temps, and fan RPMs from the correct hardware sources.
+
+**Requires:** NVIDIA driver working (`nvidia-smi` functional) and `tuxedo-drivers` loaded (see [fix-keyboard-touchpad.md](fix-keyboard-touchpad.md)).
+
+---
+
+## What It Shows
+
+```
+╔════════════════════════════════════════╗
+║  Monster TULPAR T6 V2.1 - Thermals    ║
+╠════════════════════════════════════════╣
+║  CPU Package   : 61.0C               ║
+║  CPU Max Core  : 62C                 ║
+║  NVMe 0        : 28.0C               ║
+║  NVMe 1        : 32.0C               ║
+╠════════════════════════════════════════╣
+║  GPU Temp      : 43C                 ║
+║  GPU Fan (smi) : EC-controlled       ║
+║  GPU Power     : 17W                 ║
+║  GPU Clock     : 2370MHz             ║
+╠════════════════════════════════════════╣
+║  CPU Fan       : 2298 RPM            ║
+║  DGPU Fan      : 2274 RPM            ║
+╚════════════════════════════════════════╝
+```
+
+---
+
+## Sensor Sources
+
+| Sensor | Source | Notes |
+|--------|--------|-------|
+| CPU package + all cores | `coretemp` hwmon | Working natively |
+| Both NVMe drives | `nvme` hwmon | Working natively |
+| CPU Fan RPM | ACPI hwmon (`INTC1063:00`) | Working natively |
+| DGPU Fan RPM | ACPI hwmon (`INTC1063:01`) | Working natively |
+| GPU temperature | `nvidia-smi` | Requires NVIDIA driver loaded |
+| GPU power & clock | `nvidia-smi` | Requires NVIDIA driver loaded |
+
+> **Note:** The ITE IT5570E embedded controller (chip ID `0x5570`) is not supported by the standard `it87` kernel module. Fan RPM is read via ACPI hwmon which is accurate. Fan PWM control is handled by the EC firmware and the Tuxedo Control Center.
+
+---
+
+## Installation
+
+**1. Create the script file:**
+
+```bash
+sudo tee /usr/local/bin/temps << 'EOF'
 #!/usr/bin/env python3
 """Monster TULPAR T6 V2.1 - complete thermal/fan status"""
 import os, subprocess, struct, ctypes, fcntl
@@ -107,3 +159,35 @@ for i, rpm in enumerate(fan_devices):
     duty_str = f" ({duty}% EC)" if duty is not None else ""
     row(label, f"{rpm} RPM{duty_str}")
 print("╚════════════════════════════════════════╝")
+EOF
+```
+
+**2. Make it executable:**
+
+```bash
+sudo chmod +x /usr/local/bin/temps
+```
+
+**3. Run it:**
+
+```bash
+temps
+```
+
+---
+
+## Troubleshooting
+
+**GPU section shows `nvidia-smi N/A`**
+
+The NVIDIA driver is not loaded. See [fix-nvidia.md](fix-nvidia.md).
+
+**Fan RPMs missing or all showing `N/A`**
+
+The Tuxedo modules must be loaded:
+
+```bash
+lsmod | grep tuxedo
+```
+
+If missing, see [fix-keyboard-touchpad.md](fix-keyboard-touchpad.md).
