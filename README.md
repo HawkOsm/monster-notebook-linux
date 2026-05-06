@@ -14,7 +14,6 @@ A collection of step-by-step guides for fixing common hardware issues on Monster
 | Touchpad locked (disabled at the hardware level) | [fix-keyboard-touchpad.md](fix-keyboard-touchpad.md) |
 | `nvidia-smi` fails after a kernel upgrade | [fix-nvidia.md](fix-nvidia.md) |
 | All rendering on Intel iGPU instead of RTX 4070 | [fix-gpu-prime.md](fix-gpu-prime.md) |
-| Steam fails with "Missing X server or $DISPLAY" | [fix-steam-x11-socket.md](fix-steam-x11-socket.md) |
 | Temperature and fan sensor monitoring | [temps-monitoring.md](temps-monitoring.md) |
 
 ---
@@ -32,10 +31,6 @@ Fixes `nvidia-smi` failures after a kernel upgrade. The Tuxedo apt repository us
 ### [fix-gpu-prime.md](fix-gpu-prime.md)
 
 Switches the GPU PRIME profile from the default `on-demand` mode (Intel renders everything) to `nvidia` mode (RTX 4070 renders everything). Also covers how to switch back for better battery life.
-
-### [fix-steam-x11-socket.md](fix-steam-x11-socket.md)
-
-Fixes Steam exiting with "Missing X server or $DISPLAY" / "SDL_Init failed: No available video device" on this machine. The cause is anything that replaces `/tmp/.X11-unix/X0` with a broken symlink — typically a stray user-systemd unit or `tmpfiles.d` drop-in that runs `ln -sf X1 /tmp/.X11-unix/X0` on every login. Steam's pressure-vessel sandbox cannot fall back to the abstract socket. Includes both the clean relog fix and a no-relog AF_UNIX proxy script.
 
 ### [temps-monitoring.md](temps-monitoring.md)
 
