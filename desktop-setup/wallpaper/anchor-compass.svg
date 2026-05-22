@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -200 400 400" width="400" height="400">
+  <!-- Compass rose outer ring -->
+  <circle cx="0" cy="0" r="160" fill="none" stroke="#444444" stroke-width="1.2"/>
+  <circle cx="0" cy="0" r="148" fill="none" stroke="#333333" stroke-width="0.6"/>
+
+  <!-- Compass tick marks -->
+  <!-- Major ticks at N/S/E/W and 45° -->
+  <line x1="0" y1="-148" x2="0" y2="-160" stroke="#888888" stroke-width="1.5"/>
+  <line x1="0" y1="148" x2="0" y2="160" stroke="#888888" stroke-width="1.5"/>
+  <line x1="-148" y1="0" x2="-160" y2="0" stroke="#888888" stroke-width="1.5"/>
+  <line x1="148" y1="0" x2="160" y2="0" stroke="#888888" stroke-width="1.5"/>
+  <!-- NE/NW/SE/SW -->
+  <line x1="104.7" y1="-104.7" x2="113.1" y2="-113.1" stroke="#666666" stroke-width="1"/>
+  <line x1="-104.7" y1="-104.7" x2="-113.1" y2="-113.1" stroke="#666666" stroke-width="1"/>
+  <line x1="104.7" y1="104.7" x2="113.1" y2="113.1" stroke="#666666" stroke-width="1"/>
+  <line x1="-104.7" y1="104.7" x2="-113.1" y2="113.1" stroke="#666666" stroke-width="1"/>
+  <!-- Minor ticks every 15° -->
+  <line x1="38.2" y1="-143" x2="41.2" y2="-154.2" stroke="#3a3a3a" stroke-width="0.7"/>
+  <line x1="-38.2" y1="-143" x2="-41.2" y2="-154.2" stroke="#3a3a3a" stroke-width="0.7"/>
+  <line x1="143" y1="-38.2" x2="154.2" y2="-41.2" stroke="#3a3a3a" stroke-width="0.7"/>
+  <line x1="143" y1="38.2" x2="154.2" y2="41.2" stroke="#3a3a3a" stroke-width="0.7"/>
+  <line x1="38.2" y1="143" x2="41.2" y2="154.2" stroke="#3a3a3a" stroke-width="0.7"/>
+  <line x1="-38.2" y1="143" x2="-41.2" y2="154.2" stroke="#3a3a3a" stroke-width="0.7"/>
+  <line x1="-143" y1="-38.2" x2="-154.2" y2="-41.2" stroke="#3a3a3a" stroke-width="0.7"/>
+  <line x1="-143" y1="38.2" x2="-154.2" y2="41.2" stroke="#3a3a3a" stroke-width="0.7"/>
+
+  <!-- Cardinal labels -->
+  <text x="0" y="-168" text-anchor="middle" dominant-baseline="middle" font-family="Ubuntu Sans, sans-serif" font-size="13" font-weight="600" fill="#CCCCCC" letter-spacing="1">N</text>
+  <text x="0" y="180" text-anchor="middle" dominant-baseline="middle" font-family="Ubuntu Sans, sans-serif" font-size="11" fill="#666666">S</text>
+  <text x="180" y="0" text-anchor="middle" dominant-baseline="middle" font-family="Ubuntu Sans, sans-serif" font-size="11" fill="#666666">E</text>
+  <text x="-180" y="0" text-anchor="middle" dominant-baseline="middle" font-family="Ubuntu Sans, sans-serif" font-size="11" fill="#666666">W</text>
+
+  <!-- Compass star / wind rose points (8-pointed) -->
+  <!-- N point (white, tall) -->
+  <polygon points="0,-130 -14,-60 0,-80 14,-60" fill="#FFFFFF" opacity="0.95"/>
+  <!-- S point (gray) -->
+  <polygon points="0,130 -14,60 0,80 14,60" fill="#555555"/>
+  <!-- E point (gray) -->
+  <polygon points="130,0 60,-14 80,0 60,14" fill="#555555"/>
+  <!-- W point (gray) -->
+  <polygon points="-130,0 -60,-14 -80,0 -60,14" fill="#555555"/>
+  <!-- NE/NW/SE/SW smaller points -->
+  <polygon points="80,-80 40,-52 52,-40" fill="#3a3a3a"/>
+  <polygon points="-80,-80 -52,-40 -40,-52" fill="#3a3a3a"/>
+  <polygon points="80,80 52,40 40,52" fill="#3a3a3a"/>
+  <polygon points="-80,80 -40,52 -52,40" fill="#3a3a3a"/>
+
+  <!-- Inner circle hub -->
+  <circle cx="0" cy="0" r="24" fill="none" stroke="#555555" stroke-width="1.2"/>
+  <circle cx="0" cy="0" r="18" fill="#111111" stroke="#888888" stroke-width="0.8"/>
+
+  <!-- Anchor — centered, proportional -->
+  <!-- Ring at top -->
+  <circle cx="0" cy="-54" r="9" fill="none" stroke="#BBBBBB" stroke-width="2.5"/>
+  <!-- Crossbar -->
+  <line x1="-26" y1="-42" x2="26" y2="-42" stroke="#BBBBBB" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Shank (vertical stem) -->
+  <line x1="0" y1="-42" x2="0" y2="46" stroke="#BBBBBB" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Arms (curved flukes) -->
+  <!-- Left fluke -->
+  <path d="M 0,46 Q -32,46 -34,62" fill="none" stroke="#BBBBBB" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M -34,62 Q -36,72 -26,72" fill="none" stroke="#BBBBBB" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right fluke -->
+  <path d="M 0,46 Q 32,46 34,62" fill="none" stroke="#BBBBBB" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 34,62 Q 36,72 26,72" fill="none" stroke="#BBBBBB" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Stock line through ring -->
+  <line x1="-16" y1="-54" x2="16" y2="-54" stroke="#BBBBBB" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Center dot -->
+  <circle cx="0" cy="0" r="4" fill="#888888"/>
+</svg>
