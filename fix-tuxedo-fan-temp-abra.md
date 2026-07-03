@@ -62,6 +62,7 @@ A board-specific out-of-tree module, [`tuxedo-abra-fan-fix/tuxedo_abra_fan.c`](t
 - Registers a hwmon chip named exactly **`tuxedo`**, so `tccd` picks it up via path 2 above and never touches the broken WMI path. After restart, `tccd` logs `Using pwm hwmon` instead of `Using tuxedo-io`.
 - Exposes `temp1` (label `cpu0`) read from the CPU package thermal MSR.
 - Exposes `fan1`/`fan2` (labels `cpu0`/`gpu0`) reporting the live EC duty value with `fan_max = 127`, so `tccd`'s `input/max*100` math displays the true duty percent.
+- Exposes `temp2` (label `gpu0`) fed from userspace: TCC's dashboard hides the entire GPU fan card unless a `gpu0` temp > 1 exists, but the NVIDIA proprietary driver provides no hwmon and the GPU temp isn't reachable from kernel space. A companion systemd service ([`abra-gpu-temp.service`](tuxedo-abra-fan-fix/abra-gpu-temp.service) + [`abra-gpu-temp-updater.sh`](tuxedo-abra-fan-fix/abra-gpu-temp-updater.sh)) polls `nvidia-smi` every 5 s — skipping polls while the dGPU is runtime-suspended so it never wakes the GPU — and writes the value into the driver's `gpu_temp` attribute. The driver expires the value after 15 s, so a dead updater can't leave a stale temp on screen (the GPU card simply disappears again, which is accurate while the GPU sleeps).
 - Keeps the previously reverse-engineered PWM duty **control** (write `pwm1`/`pwm2`, manual/auto via `pwm1_enable`) unchanged.
 
 > **Note:** because hwmon's `fanN_input` is nominally RPM, `lm-sensors` will print the raw duty (0–127) with an "RPM" unit for this chip. That's cosmetic; the value is real duty. Use `coretemp`/`nvme` in `sensors` as before for temps.
@@ -90,7 +91,19 @@ sudo modprobe tuxedo_abra_fan
 echo tuxedo_abra_fan | sudo tee /etc/modules-load.d/tuxedo-abra-fan.conf
 ```
 
-**3. Restart the TCC daemon:**
+**3. Install the GPU temperature updater service:**
+
+```bash
+sudo cp tuxedo-abra-fan-fix/abra-gpu-temp-updater.sh /usr/local/bin/
+sudo chmod +x /usr/local/bin/abra-gpu-temp-updater.sh
+sudo cp tuxedo-abra-fan-fix/abra-gpu-temp.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now abra-gpu-temp.service
+```
+
+> Adjust `GPU_PCI` in the script if your dGPU is not at PCI `0000:01:00.0` (check with `lspci | grep -i nvidia`).
+
+**4. Restart the TCC daemon:**
 
 ```bash
 sudo systemctl restart tccd
