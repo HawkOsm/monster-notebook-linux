@@ -15,6 +15,7 @@ A collection of step-by-step guides for fixing common hardware issues on Monster
 | `nvidia-smi` fails after a kernel upgrade | [fix-nvidia.md](fix-nvidia.md) |
 | All rendering on Intel iGPU instead of RTX 4070 | [fix-gpu-prime.md](fix-gpu-prime.md) |
 | Temperature and fan sensor monitoring | [temps-monitoring.md](temps-monitoring.md) |
+| TUXEDO Control Center shows no fan/temperature at all (ABRA A5) | [fix-tuxedo-fan-temp-abra.md](fix-tuxedo-fan-temp-abra.md) |
 
 ---
 
@@ -36,6 +37,10 @@ Switches the GPU PRIME profile from the default `on-demand` mode (Intel renders 
 
 Sets up a terminal thermal dashboard showing CPU package and core temperatures, NVMe drive temps, GPU temperature, GPU power and clock speed, and both fan RPMs.
 
+### [fix-tuxedo-fan-temp-abra.md](fix-tuxedo-fan-temp-abra.md)
+
+Fixes TUXEDO Control Center's dashboard showing no fan speed or temperature on the ABRA A5. The root cause is that the OEM firmware doesn't fully answer the standard Clevo WMI fan-info calls, so `tccd` gives up on its whole sensor update cycle. This guide ships a board-specific out-of-tree hwmon driver that feeds `tccd` a real CPU temperature (from the package thermal MSR, same source as coretemp) and live fan duty percent (from the reverse-engineered EC MMIO registers) through the hwmon path `tccd` already supports, instead of the broken WMI path. Includes the patched driver source in [`tuxedo-abra-fan-fix/`](tuxedo-abra-fan-fix/).
+
 ---
 
 ## Tested Configuration
@@ -50,3 +55,14 @@ Sets up a terminal thermal dashboard showing CPU package and core temperatures, 
 | Kernel | 6.17.0-23-generic |
 | Tuxedo drivers | tuxedo-drivers 4.22.2 |
 | NVIDIA driver | 580.142 |
+
+| Component | Details |
+|-----------|---------|
+| Laptop | Monster ABRA A5 V20.2 |
+| CPU | Intel Core i5-13500H (Raptor Lake) |
+| GPU | NVIDIA GeForce RTX 4050 Laptop |
+| BIOS | N.1.13MON07 |
+| OS | Ubuntu 22.04 LTS |
+| Kernel | 6.8.0-124-generic |
+| Tuxedo drivers | tuxedo-drivers 4.22.2 |
+| Board-specific driver | tuxedo-abra-fan 1.0 (out-of-tree, EC MMIO) |

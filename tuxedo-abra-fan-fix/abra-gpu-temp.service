@@ -1,0 +1,12 @@
+[Unit]
+Description=Feed NVIDIA GPU temperature to tuxedo_abra_fan hwmon for TUXEDO Control Center
+After=systemd-modules-load.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/abra-gpu-temp-updater.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
