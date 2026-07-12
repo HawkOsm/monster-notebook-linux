@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Conky Left Panel
-Comment=System monitors + daily note on left side of desktop
-Exec=bash -c 'for i in $(seq 1 30); do xdpyinfo -display :0 >/dev/null 2>&1 && break; sleep 1; done; sleep 5; DISPLAY=:0 /usr/bin/conky -c /home/osm/.config/conky/left.conf'
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true

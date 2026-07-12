@@ -247,6 +247,45 @@ systemctl status tuxedo-touchpad-enable.service
 
 ---
 
+## Where the Backlight Control Lives in Tuxedo Control Center
+
+The slider, RGB color picker and per-zone selector are **not** on the TCC Dashboard. They live under:
+
+> **TCC sidebar → Tools → Keyboard Backlight**
+
+Confirm tccd detected the keyboard:
+
+```bash
+journalctl -u tccd | grep -i KeyboardBacklight
+# Expect:
+#   KeyboardBacklightListener: Detected RGB zone keyboard backlight
+#   KeyboardBacklightListener: initUPower: Using /org/freedesktop/UPower/KbdBacklight
+```
+
+TCC talks to the LED through the **UPower DBus interface**, not sysfs directly. Quick sanity check:
+
+```bash
+gdbus call --system --dest org.freedesktop.UPower \
+  --object-path /org/freedesktop/UPower/KbdBacklight \
+  --method org.freedesktop.UPower.KbdBacklight.GetMaxBrightness   # → (255,)
+gdbus call --system --dest org.freedesktop.UPower \
+  --object-path /org/freedesktop/UPower/KbdBacklight \
+  --method org.freedesktop.UPower.KbdBacklight.GetBrightness      # → (current,)
+```
+
+### "Control is enabled but the LED is off at boot"
+
+TCC persists the last-applied backlight state in `/etc/tcc/settings` under `keyboardBacklightStates`. If `brightness: 0` is saved there, the LED comes up dark on every boot. Move the slider in TCC once and it sticks — the daemon writes back to `settings` automatically. To bootstrap from the CLI:
+
+```bash
+echo 200 | sudo tee /sys/class/leds/rgb:kbd_backlight/brightness
+# Then in TCC: Tools → Keyboard Backlight → nudge the slider so tccd saves it.
+```
+
+`keyboardBacklightControlEnabled` lives in **Global Settings** (sidebar) — leave it on.
+
+---
+
 ## Manual Keyboard Backlight Controls
 
 ```bash
