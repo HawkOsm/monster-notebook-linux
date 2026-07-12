@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Conky Panels
+Comment=Left (daily note) + right (system stats) desktop panels
+Exec=/home/osm/.local/bin/conky-start.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
