@@ -28,6 +28,12 @@ Pin-Priority: 1001
 EOF
 ```
 
+> **Newer Ubuntu releases:** replace `noble` with your release's codename in
+> both `Pin:` lines (26.04 = `resolute`), and adjust the version strings in the
+> steps below to match `apt-cache policy`'s candidate. The pin itself — Ubuntu
+> archive above the Tuxedo repo's epoch — is what matters. Verified still
+> needed after the 24.04 → 26.04 upgrade.
+
 ## Step 2 — Update the Package Cache
 
 ```bash
