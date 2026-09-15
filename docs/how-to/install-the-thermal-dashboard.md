@@ -1,14 +1,18 @@
-# Temperature & Fan Monitoring
+# Install the thermal dashboard
 
-A thermal dashboard for the Monster TULPAR T6 V2.1 that reads CPU/GPU temperatures, NVMe drive temps, and fan RPMs from the correct hardware sources.
+**Status:** verified
+**Applies to:** Monster TULPAR T6 V2.1 (AI Creator)
+**Verified on:** Ubuntu 26.04 · kernel 7.0 · 2026-08-13
+**Symptom:** no single place shows CPU, GPU and NVMe temperatures with fan
+RPMs. `sensors` alone misses the GPU, and the ITE IT5570E embedded controller
+is not supported by the `it87` module.
+**See also:** [thermal sensor sources](../reference/thermal-sensor-sources.md)
 
-**Requires:** NVIDIA driver working (`nvidia-smi` functional) and `tuxedo-drivers` loaded (see [fix-keyboard-touchpad.md](fix-keyboard-touchpad.md)).
+A terminal dashboard that reads each value from the source that actually works
+on this machine: `coretemp` and `nvme` hwmon for temperatures, ACPI hwmon for
+fan RPM, `nvidia-smi` for the GPU, and `/dev/tuxedo_io` for EC fan duty.
 
----
-
-## What It Shows
-
-```
+```text
 ╔════════════════════════════════════════╗
 ║  Monster TULPAR T6 V2.1 - Thermals    ║
 ╠════════════════════════════════════════╣
@@ -27,26 +31,26 @@ A thermal dashboard for the Monster TULPAR T6 V2.1 that reads CPU/GPU temperatur
 ╚════════════════════════════════════════╝
 ```
 
----
+## Before you start
 
-## Sensor Sources
+The GPU section needs a working NVIDIA driver, and the fan duty readings need
+the Tuxedo modules loaded:
 
-| Sensor | Source | Notes |
-|--------|--------|-------|
-| CPU package + all cores | `coretemp` hwmon | Working natively |
-| Both NVMe drives | `nvme` hwmon | Working natively |
-| CPU Fan RPM | ACPI hwmon (`INTC1063:00`) | Working natively |
-| DGPU Fan RPM | ACPI hwmon (`INTC1063:01`) | Working natively |
-| GPU temperature | `nvidia-smi` | Requires NVIDIA driver loaded |
-| GPU power & clock | `nvidia-smi` | Requires NVIDIA driver loaded |
+```bash
+nvidia-smi
+lsmod | grep tuxedo
+```
 
-> **Note:** The ITE IT5570E embedded controller (chip ID `0x5570`) is not supported by the standard `it87` kernel module. Fan RPM is read via ACPI hwmon which is accurate. Fan PWM control is handled by the EC firmware and the Tuxedo Control Center.
+If either fails, fix that first —
+[restore NVIDIA after a kernel upgrade](restore-nvidia-after-a-kernel-upgrade.md)
+and
+[unlock the keyboard backlight and touchpad](unlock-keyboard-backlight-and-touchpad.md)
+cover them. The dashboard degrades gracefully and prints `N/A` rather than
+failing, so it is still usable without them.
 
----
+## Fix
 
-## Installation
-
-**1. Create the script file:**
+### 1. Create the script
 
 ```bash
 sudo tee /usr/local/bin/temps << 'EOF'
@@ -162,32 +166,40 @@ print("╚═══════════════════════�
 EOF
 ```
 
-**2. Make it executable:**
+### 2. Make it executable
 
 ```bash
 sudo chmod +x /usr/local/bin/temps
 ```
 
-**3. Run it:**
+## Verify
 
 ```bash
 temps
 ```
 
----
+Every row should carry a number rather than `N/A`.
+
+## Roll back
+
+```bash
+sudo rm /usr/local/bin/temps
+```
 
 ## Troubleshooting
 
-**GPU section shows `nvidia-smi N/A`**
+**The GPU section shows `nvidia-smi N/A`**
 
-The NVIDIA driver is not loaded. See [fix-nvidia.md](fix-nvidia.md).
+The NVIDIA driver is not loaded. See
+[restore NVIDIA after a kernel upgrade](restore-nvidia-after-a-kernel-upgrade.md).
 
-**Fan RPMs missing or all showing `N/A`**
+**Fan RPMs are missing or all read `N/A`**
 
-The Tuxedo modules must be loaded:
+The Tuxedo modules are not loaded:
 
 ```bash
 lsmod | grep tuxedo
 ```
 
-If missing, see [fix-keyboard-touchpad.md](fix-keyboard-touchpad.md).
+If nothing is listed, see
+[unlock the keyboard backlight and touchpad](unlock-keyboard-backlight-and-touchpad.md).
