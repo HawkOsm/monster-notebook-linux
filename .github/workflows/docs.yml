@@ -1,0 +1,80 @@
+name: docs
+
+# The repository is documentation, so "does it build" means "does every guide
+# still follow the house rules and still point at something that exists".
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  style:
+    name: Style, structure and links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Enforces docs/STYLE.md: metadata block, how-to section order,
+      # sentence-case headings, 80-column prose, fence language tags, ISO
+      # dates, shell prompts in code blocks, and that every document under
+      # docs/ is reachable by following links from the README.
+      - name: Check every document against docs/STYLE.md
+        run: tools/check-docs.py
+
+  facts:
+    name: Facts kept (advisory)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check out the base revision alongside
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git worktree add ../base "$BASE_SHA"
+
+      # Advisory on purpose. Deliberately retiring a guide is a normal change
+      # in this repository, so a lost fact is something a reviewer should see,
+      # not something that blocks the merge. It exists to catch the other case:
+      # a restructure that drops a command by accident.
+      - name: Report facts that this branch drops
+        id: facts
+        continue-on-error: true
+        run: |
+          # Without pipefail the pipe would return tee's status and this step
+          # would always look like it passed.
+          set -o pipefail
+          tools/extract-facts.py ../base --missing-from . | tee facts.txt
+
+      - name: Put the result in the job summary
+        if: always()
+        run: |
+          {
+            echo "## Facts dropped by this branch"
+            echo
+            if [ "${{ steps.facts.outcome }}" = "success" ]; then
+              echo "None — every command, path and identifier on the base"
+              echo "revision still appears somewhere in the tree."
+            else
+              echo "The lines below exist on the base revision and appear"
+              echo "nowhere in this branch. Intentional if you retired a"
+              echo "guide; a bug if you were only moving things around."
+              echo
+              echo '```'
+              cat facts.txt
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
