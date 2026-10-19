@@ -3,7 +3,8 @@
 **Status:** verified
 **Applies to:** every Monster SKU reporting a `MONSTER` DMI vendor string
 **Verified on:** Ubuntu 24.04 · kernel 6.17+ · Arch Linux · kernel 7.1.8 ·
-`tuxedo-drivers` 4.22.2 · 2026-08-13
+`tuxedo-drivers` 4.22.2 · 2026-08-13; Arch Linux · kernel 7.2.11 ·
+`tuxedo-drivers` 4.25.0 · 2026-10-19
 **See also:** [unlock the keyboard backlight and touchpad](../how-to/unlock-keyboard-backlight-and-touchpad.md)
 
 ## In short
@@ -27,6 +28,13 @@ is a string comparison in
 The failure is silent in the way that wastes the most time. `modprobe` reports
 `No such device`, which reads like missing hardware rather than a refused
 match — and the hardware is right there.
+
+The gate grew between versions but not in a way that helps. In 4.25.0 the
+table has three entries, matching `DMI_SYS_VENDOR`, `DMI_BOARD_VENDOR` and
+`DMI_CHASSIS_VENDOR` against `TUXEDO`, and still nothing for `MONSTER`. A
+source comment above it says "Going forward we only run the drivers on in
+house tested devices". The same fix applies, and it is lost whenever an update
+replaces the patched source tree.
 
 On kernel 6.17 and later a second problem stacks on top: the kernel ships a
 built-in `tuxedo_io` v0.3.9 while the DKMS package provides v0.3.6, so the two

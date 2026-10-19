@@ -112,7 +112,7 @@ Documents are split by what you need from them, following
 | OS | Ubuntu 26.04 LTS · Arch Linux | Ubuntu 22.04 LTS |
 | Kernel | 7.0.0-15-generic · 7.2 | 6.8.0-124-generic |
 | NVIDIA driver | 580.142 (`-open`) | — |
-| `tuxedo-drivers` | 4.22.2 | 4.22.2 (+ `tuxedo-abra-fan` 1.0 out-of-tree) |
+| `tuxedo-drivers` | 4.22.2 · 4.25.0 | 4.22.2 (+ `tuxedo-abra-fan` 1.0 out-of-tree) |
 | TUXEDO Control Center | 3.0.4 | 2.1.17 |
 
 Every guide records the exact system it was verified on, with a date, in its

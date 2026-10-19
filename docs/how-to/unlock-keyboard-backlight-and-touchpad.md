@@ -4,7 +4,8 @@
 **Applies to:** Monster TULPAR T6 V2.1 (AI Creator); any Monster SKU reporting
 a `MONSTER` DMI vendor
 **Verified on:** Ubuntu 24.04 · kernel 6.17+ · Arch Linux · kernel 7.1.8 ·
-`tuxedo-drivers` 4.22.2 · 2026-08-13
+`tuxedo-drivers` 4.22.2 · 2026-08-13; Arch Linux · kernel 7.2.11 ·
+`tuxedo-drivers` 4.25.0 (fan speed not tested) · 2026-10-19
 **Symptom:** the keyboard backlight is dead or stuck off, and the touchpad is
 disabled and will not toggle with `Fn`+`F1`. `modprobe tuxedo_keyboard` fails
 with `No such device`.
@@ -25,6 +26,19 @@ Confirm the machine reports the vendor string this guide is about:
 ```bash
 cat /sys/class/dmi/id/sys_vendor /sys/class/dmi/id/product_name
 ```
+
+Then find which `tuxedo-drivers` version is installed:
+
+```bash
+ls /usr/src | grep tuxedo-drivers
+```
+
+The steps below were written against 4.22.2. If you have a different version,
+substitute it for `4.22.2` in every path and `dkms` command in this guide.
+4.25.0 was checked as well: the patch pattern in step 2 matched exactly once
+in its source, and steps 2 to 5 completed on Arch Linux with kernel 7.2.11.
+Two things behave differently there, covered in [Verify](#verify) and
+[Troubleshooting](#troubleshooting).
 
 ## Fix
 
@@ -281,6 +295,20 @@ lsmod | grep tuxedo
 systemctl status tuxedo-touchpad-enable.service
 ```
 
+`tccd` also stops complaining once the driver loads. Before the patch it logged
+`Fan API not available` and `Detected no keyboard backlight`:
+
+```bash
+journalctl -b -u tccd --no-pager | tail -8
+# expect: "initializeFanControl: Detected N fans" and "ODMProfileWorker: Using tuxedo-io"
+```
+
+On 4.25.0, `lsmod` showed `ite_829x` loaded although the loop in step 5 had
+not named it, and `/dev/tuxedo_io` and `/sys/class/leds/rgb:kbd_backlight`
+both existed. Also checked there: the `tccd` log, and, by the owner's report,
+the keyboard in use and a reboot. Fan speed responding to a TCC profile was
+not.
+
 ## Roll back
 
 ```bash
@@ -296,6 +324,18 @@ Ubuntu, `yay -R tuxedo-drivers-dkms` on Arch — which discards the patched
 source tree along with it. Rebuild the initramfs and reboot.
 
 ## Troubleshooting
+
+**The keyboard and fans stopped working after a `tuxedo-drivers-dkms` update**
+
+The patch edits a file the package owns, so an update brings back a pristine
+tree. On Arch, the 4.22.2 to 4.25.0 update left `/usr/src/tuxedo-drivers-4.25.0`
+with no `MONSTER` entry, and only `tuxedo_compatibility_check` was loaded.
+Check the new tree, then repeat steps 2 to 5 with the new version number:
+
+```bash
+grep -c MONSTER /usr/src/tuxedo-drivers-*/tuxedo_compatibility_check/tuxedo_compatibility_check.c
+# expect: 1 for a patched tree, 0 for a pristine one
+```
 
 **`modprobe: ERROR: could not insert 'tuxedo_keyboard': No such device`**
 
