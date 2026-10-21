@@ -24,6 +24,7 @@ XMG/Schenker, System76 and other machines built on the same shells.
 | dGPU never idles on battery (Hyprland, hybrid graphics) | [idle the dGPU on battery under Hyprland](docs/how-to/idle-the-dgpu-on-battery-under-hyprland.md) |
 | Login screen comes up black on some boots (hybrid graphics, Wayland) | [fix a black GDM greeter](docs/how-to/fix-a-black-gdm-greeter.md) |
 | `pcieport … D3cold to D0` spam in the journal | [silence Thunderbolt D3cold log spam](docs/how-to/silence-thunderbolt-d3cold-log-spam.md) |
+| `iw reg get` shows `country 00`, `set-wireless-regdom failed with exit code 1` in the journal (Arch) | [set the Wi-Fi regulatory domain](docs/how-to/set-the-wifi-regulatory-domain.md) |
 | TUXEDO Control Center shows no fan or temperature (ABRA A5) | [show fan and temperature in TUXEDO Control Center](docs/how-to/show-fan-and-temperature-in-tuxedo-control-center.md) |
 | Power-profile switcher in a custom shell does nothing | [switch power profiles from a custom shell](docs/how-to/switch-power-profiles-from-a-custom-shell.md) |
 | `Fn` hotkeys dead under Hyprland | [bind Fn hotkeys under Hyprland](docs/how-to/bind-fn-hotkeys-under-hyprland.md) |
