@@ -1,9 +1,16 @@
-# Monster Notebook Linux
+# Clevo Linux fixes
 
-Field guides for running Linux on Monster (Clevo/TONGFANG-based) notebooks.
-Every fix here was hit, diagnosed and verified on real hardware. Monster
-ships rebadged Clevo barebones, so most of this applies equally to TUXEDO,
-XMG/Schenker, System76 and other machines built on the same shells.
+Unofficial field guides for running Linux on Clevo/TONGFANG-based notebooks,
+verified on Monster hardware. Every fix here was hit, diagnosed and verified
+on real hardware. Monster ships rebadged Clevo barebones, so most of this
+applies equally to TUXEDO, XMG/Schenker, System76 and other machines built on
+the same shells.
+
+> **Unofficial community project.** Not affiliated with, sponsored by or
+> endorsed by Monster Notebook, TUXEDO Computers or Clevo. Monster, TULPAR,
+> ABRA, TUXEDO and all other product names, logos and trademarks belong to
+> their respective owners and are used here only to identify the hardware and
+> software these notes apply to.
 
 **Machines behind this repository:**
 
@@ -93,9 +100,10 @@ Documents are split by what you need from them, following
 
 ### Also in this repository
 
-- **[tuxedo-abra-fan-fix/](tuxedo-abra-fan-fix/)** — the out-of-tree hwmon
+- **[drivers/abra-a5-fan/](drivers/abra-a5-fan/)** — the out-of-tree hwmon
   driver for the ABRA A5, reverse-engineered from the DSDT and EC MMIO
-  registers.
+  registers. It supports the
+  [fan and temperature how-to](docs/how-to/show-fan-and-temperature-in-tuxedo-control-center.md).
 - **[bios-dumps/](bios-dumps/)** — UEFI Setup variable dumps for the TULPAR
   T6, for hunting hidden BIOS options.
 - **[notes/](notes/)** — open investigations and abandoned efforts:

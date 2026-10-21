@@ -11,7 +11,7 @@ running Linux. It is a support repository for that hardware and nothing else —
 personal dotfiles, desktop theming and abandoned non-Linux side quests do not
 belong in it. Every claim in it was produced by running a command on real
 hardware. There is no build, no test suite and no application code apart from
-one out-of-tree kernel module in `tuxedo-abra-fan-fix/`.
+one out-of-tree kernel module in `drivers/abra-a5-fan/`.
 
 The consequence: **you cannot verify anything here by reasoning about it.**
 A kernel version, a register offset, a fan duty value or a D-Bus method name
@@ -49,7 +49,7 @@ docs/explanation/      why it breaks, how it was diagnosed
 docs/reference/        tables and lookups, no narrative
 notes/                 open investigations, abandoned efforts, ideas
 tools/                 check-docs.py, extract-facts.py
-tuxedo-abra-fan-fix/   out-of-tree kernel module (C, DKMS)
+drivers/               out-of-tree kernel module (C, DKMS): ABRA A5 fan
 bios-dumps/            UEFI Setup variable dumps
 firmware-cache/        gitignored; binaries are not published
 ```
