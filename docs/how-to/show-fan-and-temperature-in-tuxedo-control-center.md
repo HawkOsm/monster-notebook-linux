@@ -24,7 +24,7 @@ The driver registers a hwmon chip named `tuxedo`, so `tccd` logs
 - `pwm1`, `pwm2` and `pwm1_enable` — the reverse-engineered duty control,
   unchanged.
 
-Its source lives in [`tuxedo-abra-fan-fix/`](../../tuxedo-abra-fan-fix/).
+Its source lives in [`drivers/abra-a5-fan/`](../../drivers/abra-a5-fan/).
 
 ## Before you start
 
@@ -50,9 +50,10 @@ journalctl -u tccd -b | grep -E "Using tuxedo-io|Control unavailable"
 
 ```bash
 sudo mkdir -p /usr/src/tuxedo-abra-fan-1.0
-sudo cp tuxedo-abra-fan-fix/tuxedo_abra_fan.c \
-        tuxedo-abra-fan-fix/Makefile \
-        tuxedo-abra-fan-fix/dkms.conf /usr/src/tuxedo-abra-fan-1.0/
+sudo cp drivers/abra-a5-fan/tuxedo_abra_fan.c \
+        drivers/abra-a5-fan/Makefile \
+        drivers/abra-a5-fan/dkms.conf \
+        /usr/src/tuxedo-abra-fan-1.0/
 ```
 
 ### 2. Build and install with DKMS
@@ -78,9 +79,9 @@ and the driver expires the value after 15 s so a dead updater cannot leave a
 stale reading on screen.
 
 ```bash
-sudo cp tuxedo-abra-fan-fix/abra-gpu-temp-updater.sh /usr/local/bin/
+sudo cp drivers/abra-a5-fan/abra-gpu-temp-updater.sh /usr/local/bin/
 sudo chmod +x /usr/local/bin/abra-gpu-temp-updater.sh
-sudo cp tuxedo-abra-fan-fix/abra-gpu-temp.service /etc/systemd/system/
+sudo cp drivers/abra-a5-fan/abra-gpu-temp.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now abra-gpu-temp.service
 ```
